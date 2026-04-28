@@ -1,0 +1,41 @@
+# C build artifacts
+lib/**/*.o
+lib/**/*.d
+lib/_test_runner
+
+# C libraries
+lib/libhexlock.a
+lib/libhexlock.dylib
+lib/libhexlock.so
+
+# Python package — compiled lib copy (build artifact)
+python/hexlock/_lib/*
+!python/hexlock/_lib/.gitkeep
+
+# WASM output
+web/wasm/hexlock.wasm
+web/wasm/hexlock.js
+
+# Python
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+**/__pycache__/
+*.egg
+.eggs/
+
+
+# Config
+.hexlock.yaml
+
+# Editor
+.DS_Store
+*.swp
+
+# External
+external/pcre2/
+
+# Local
+notes/

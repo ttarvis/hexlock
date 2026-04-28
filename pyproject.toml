@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hexlock"
+version = "0.1.0"
+description = "Format-preserving PII anonymization for LLM pipelines"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+
+[project.optional-dependencies]
+persistent = ["cryptography>=41.0"]
+dev = ["pytest", "cryptography>=41.0"]
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+[tool.setuptools.package-data]
+"hexlock" = ["_lib/libhexlock.dylib", "_lib/libhexlock.so"]
+
+[project.urls]
+Homepage = "https://hexlock.xyz"
+Repository = "https://github.com/ttarvis/hexlock"
+

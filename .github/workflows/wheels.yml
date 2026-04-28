@@ -1,0 +1,128 @@
+name: Build and publish wheels
+
+on:
+  push:
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build_wheels:
+    name: Build wheels — ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── macOS: build PCRE2 and libhexlock.dylib for both arches ──────────
+      - name: Build PCRE2 + dylib for arm64 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          bash scripts/fetch_deps.sh \
+            arm64 \
+            external/pcre2-arm64 \
+            "$(pwd)/external/pcre2-arm64/build"
+          bash scripts/build_dylib.sh \
+            arm64 \
+            "$(pwd)/external/pcre2-arm64/build" \
+            "$(pwd)/lib/libhexlock-arm64.dylib"
+
+      - name: Build PCRE2 + dylib for x86_64 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          bash scripts/fetch_deps.sh \
+            x86_64 \
+            external/pcre2-x86_64 \
+            "$(pwd)/external/pcre2-x86_64/build"
+          bash scripts/build_dylib.sh \
+            x86_64 \
+            "$(pwd)/external/pcre2-x86_64/build" \
+            "$(pwd)/lib/libhexlock-x86_64.dylib"
+
+      - name: Verify dylib architectures (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          file lib/libhexlock-arm64.dylib
+          file lib/libhexlock-x86_64.dylib
+          lipo -info lib/libhexlock-arm64.dylib
+          lipo -info lib/libhexlock-x86_64.dylib
+
+      # ── Linux: build PCRE2 inside the manylinux container ────────────────
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      # ── cibuildwheel ──────────────────────────────────────────────────────
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.21
+        env:
+          CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
+          CIBW_SKIP: "*-musllinux*"
+
+          CIBW_ARCHS_MACOS: "arm64 x86_64"
+          CIBW_ARCHS_LINUX: "x86_64 aarch64"
+
+          CIBW_BEFORE_ALL_LINUX: |
+            bash scripts/fetch_deps.sh
+            make -C lib
+
+          # On macOS, the arch-specific dylib was already built above.
+          # Just copy the right one into the Python package directory.
+          # ARCHFLAGS is set by cibuildwheel, e.g. "-arch x86_64".
+          CIBW_BEFORE_BUILD_MACOS: |
+            ARCH=$(echo "$ARCHFLAGS" | sed 's/.*-arch //')
+            mkdir -p python/hexlock/_lib
+            cp "$(pwd)/lib/libhexlock-${ARCH}.dylib" python/hexlock/_lib/libhexlock.dylib
+
+          CIBW_BEFORE_BUILD_LINUX: |
+            make -C python copy_lib
+
+          CIBW_TEST_REQUIRES: ""
+          CIBW_TEST_COMMAND: |
+            python -c "
+            import hexlock
+            client = hexlock.Client()
+            anon = client.anonymize('call me at 234-555-6666')
+            print('anonymized:', anon)
+            orig = client.deanonymize(anon)
+            assert orig == 'call me at 234-555-6666', repr(orig)
+            print('deanonymized:', orig)
+            print('OK')
+            "
+
+      - name: Upload wheel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  publish:
+    name: Publish to PyPI
+    needs: build_wheels
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: pypi
+      url: https://pypi.org/project/hexlock/
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: wheelhouse
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: wheelhouse/

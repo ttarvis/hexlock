@@ -1,0 +1,95 @@
+# clang-format 13 compatible
+# Style closely matching Bjarne Stroustrup's C++ guidelines
+---
+Language:        Cpp
+#BasedOnStyle:    Linux
+
+# Indentation
+UseTab:                  ForIndentation
+TabWidth:                8
+IndentWidth:             8
+ContinuationIndentWidth: 8
+
+# Braces - Stroustrup keeps opening braces on same line, except for functions
+BreakBeforeBraces:       Attach
+
+# Line length
+ColumnLimit:             80
+
+# Spacing
+SpaceAfterCStyleCast:           false
+SpaceAfterLogicalNot:           false
+SpaceAfterTemplateKeyword:      true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList:     false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon:    true
+SpaceBeforeParens:              ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets:      false
+SpaceInEmptyBlock:              false
+SpaceInEmptyParentheses:        false
+SpacesBeforeTrailingComments:   2
+SpacesInAngles:                 false
+SpacesInCStyleCastParentheses:  false
+SpacesInConditionalStatement:   false
+SpacesInContainerLiterals:      false
+SpacesInParentheses:            false
+SpacesInSquareBrackets:         false
+
+# Alignment
+AlignAfterOpenBracket:          Align
+AlignConsecutiveAssignments:    false
+AlignConsecutiveDeclarations:   false
+AlignEscapedNewlines:           Right
+AlignOperands:                  Align
+AlignTrailingComments:          true
+
+# Pointers and references - Stroustrup style attaches to type
+PointerAlignment:               Right
+ReferenceAlignment:             Left
+
+# Constructor initializers
+BreakConstructorInitializers:   BeforeColon
+ConstructorInitializerIndentWidth: 4
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+
+# Function declarations/calls
+AllowAllArgumentsOnNextLine:           true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine:         Empty
+AllowShortCaseLabelsOnASingleLine:     false
+AllowShortFunctionsOnASingleLine:      Inline
+AllowShortIfStatementsOnASingleLine:   Never
+AllowShortLambdasOnASingleLine:        Inline
+AllowShortLoopsOnASingleLine:          false
+BinPackArguments:                      true
+BinPackParameters:                     true
+
+# Includes
+SortIncludes:                   true
+IncludeBlocks:                  Regroup
+
+# Namespaces
+CompactNamespaces:              false
+NamespaceIndentation:           None
+FixNamespaceComments:           true
+
+# Templates
+AlwaysBreakTemplateDeclarations: Yes
+
+# Access modifiers (public/private/protected) - dedented by 4 to align with class body
+AccessModifierOffset:           -8
+
+# Misc
+AlwaysBreakAfterReturnType:     None
+Cpp11BracedListStyle:           true
+DerivePointerAlignment:         false
+EmptyLineBeforeAccessModifier:  LogicalBlock
+IndentCaseLabels:               false
+IndentPPDirectives:             None
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep:            1
+ReflowComments:                 true
+Standard:                       c++17
+...
