@@ -46,6 +46,10 @@ PII_PASSPORT        = 8
 PII_ROUTING_NUMBER  = 9
 PII_BANK_ACCOUNT    = 10
 PII_DRIVERS_LICENSE = 11
+PII_GITHUB_TOKEN    = 12
+PII_AWS_ACCESS_KEY  = 13
+PII_AWS_SECRET_KEY  = 14
+PII_ANTHROPIC_KEY   = 15
 
 # hexlock_algorithm_t
 ALGO_FPE      = 0
@@ -66,6 +70,15 @@ SUBTYPE_ROUTING_NUMBER   = 10
 SUBTYPE_BANK_ACCOUNT     = 11
 SUBTYPE_DRIVERS_LICENSE  = 12
 SUBTYPE_EMAIL            = 13
+SUBTYPE_GITHUB_GHP      = 14
+SUBTYPE_GITHUB_GHO      = 15
+SUBTYPE_GITHUB_GHU      = 16
+SUBTYPE_GITHUB_GHS      = 17
+SUBTYPE_GITHUB_GHR      = 18
+SUBTYPE_AWS_ACCESS_KEY  = 19
+SUBTYPE_AWS_SECRET_KEY  = 20
+SUBTYPE_ANTHROPIC_API   = 21
+SUBTYPE_ANTHROPIC_OAT   = 22
 
 # hexlock_err_t
 ERR_OK           = 0
@@ -102,7 +115,7 @@ class TokenRecord(ctypes.Structure):
         ("algo",        ctypes.c_int),    # hexlock_algorithm_t
         ("subtype",     ctypes.c_int),    # hexlock_subtype_t
         ("token_key",   ctypes.c_uint32),
-        ("transformed", ctypes.c_char * 64),
+        ("transformed", ctypes.c_char * 256),
         ("original",    ctypes.c_char * 256),
     ]
 
@@ -118,7 +131,8 @@ class Result(ctypes.Structure):
 # This is for making sure that if we change the C code
 # Python requires a revision
 
-assert ctypes.sizeof(TokenRecord) == 336, (
+# 4+4+4+4 (type, algo, subtype, token_key) + 256 (transformed) + 256 (original) = 528
+assert ctypes.sizeof(TokenRecord) == 528, (
     f"TokenRecord size mismatch: expected 336, got {ctypes.sizeof(TokenRecord)}. "
     "Update _bindings.py to match the C struct."
 )

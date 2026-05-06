@@ -523,6 +523,91 @@ static void test_fpe(void) {
 	fpe_encrypt_phone_dash(key, src, strlen(src), enc);
 	fpe_encrypt_phone_dash(key, src, strlen(src), enc2);
 	CHECK("stability: same input same output", strcmp(enc, enc2) == 0);
+
+	/* GitHub tokens */
+	char enc_token[256];
+	char dec_token[256];
+	const char *gh;
+
+	gh = "ghp_1234567890abcdefghijklmnopqrstuvwxyz";
+	CHECK("GitHub ghp encrypt token ok",
+	      fpe_encrypt_github_ghp(key, gh, strlen(gh), enc_token) ==
+	              HEXLOCK_OK);
+	CHECK("GitHub ghp decrypt token ok",
+	      fpe_decrypt_github_ghp(key, enc_token, strlen(enc_token),
+	                             dec_token) == HEXLOCK_OK);
+	CHECK("GitHub ghp token zero round trip", strcmp(dec_token, gh) == 0);
+
+	gh = "gho_aB1cD2eF3gH4iJ5kL6mN7oP8qR9sT0uV1wX2";
+	CHECK("GitHub gho encrypt token ok",
+	      fpe_encrypt_github_ghp(key, gh, strlen(gh), enc_token) ==
+	              HEXLOCK_OK);
+	CHECK("GitHub gho decrypt token ok",
+	      fpe_decrypt_github_ghp(key, enc_token, strlen(enc_token),
+	                             dec_token) == HEXLOCK_OK);
+	CHECK("GitHub gho token zero round trip", strcmp(dec_token, gh) == 0);
+
+	/* skipping other GitHub tokens because they are basically the same */
+	/* TODO: write tests for the other GitHub token types */
+
+	/* AWS tokens */
+	const char *aws;
+
+	aws = "AKIAABCDEFGH234567AB";
+	CHECK("AWS aws encrypt token ok",
+	      fpe_encrypt_aws_access_key(key, aws, strlen(aws), enc_token) ==
+	              HEXLOCK_OK);
+	CHECK("AWS aws decrypt token ok",
+	      fpe_decrypt_aws_access_key(key, enc_token, strlen(enc_token),
+	                                 dec_token) == HEXLOCK_OK);
+	CHECK("AWS token zero round trip", strcmp(dec_token, aws) == 0);
+
+	aws = "AKIAZ7ABCDEF234567ZA";
+	fpe_encrypt_aws_access_key(key, aws, strlen(aws), enc_token);
+	
+	// this test is here because we have to be certain about the
+	// somewhat unusual base32 alphabet
+	size_t len = strlen(aws);
+	for (size_t i = 0; i < len; i++) {
+		char c = enc_token[i];
+		int valid = (c >= 'A' && c <= 'Z') || (c >= '2' && c <= '7');
+		CHECK("AWS key encryption is valid", valid);
+	}
+
+	fpe_decrypt_aws_access_key(key, enc_token, strlen(enc_token), dec_token);
+	for (size_t i = 0; i < len; i++) {
+		char c = dec_token[i];
+		int valid = (c >= 'A' && c <= 'Z') || (c >= '2' && c <= '7');
+		CHECK("AWS key decryption is valid", valid);
+	}
+
+	aws = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+	CHECK("AWS aws encrypt token ok",
+	      fpe_encrypt_aws_secret_key(key, aws, strlen(aws), enc_token) ==
+	              HEXLOCK_OK);
+	CHECK("AWS aws decrypt token ok",
+	      fpe_decrypt_aws_secret_key(key, enc_token, strlen(enc_token),
+	                                 dec_token) == HEXLOCK_OK);
+	CHECK("AWS token zero round trip", strcmp(dec_token, aws) == 0);
+
+	/* Anthropic tokens */
+	const char *anth;
+
+	anth = "sk-ant-api03-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop";
+	CHECK("Anthropic api key encrypt token ok",
+	      fpe_encrypt_anthropic_api(key, anth, strlen(anth), enc_token) ==
+	              HEXLOCK_OK);
+	CHECK("Anthropic api decrypt token ok",
+	      fpe_decrypt_anthropic_api(key, enc_token, strlen(enc_token),
+	                                dec_token) == HEXLOCK_OK);
+	CHECK("Anthropic api token zero round trip",
+	      strcmp(dec_token, anth) == 0);
+
+	/* skipping the Anthropic oauth token because it's not meaningfully
+	 * different */
+	/* TODO: consider writing tests for it for code coverage */
+
+	print_summary();
 }
 
 /*
@@ -581,6 +666,7 @@ static void test_tokenizer(void) {
 
 	/* output fits in 64 bytes */
 	CHECK("email output length ok", strlen(dst) < 64);
+	print_summary();
 }
 
 static void test_process(void) {
@@ -761,6 +847,7 @@ static void test_process(void) {
 	printf("  decrypt ip: -> %s\n", transformed_ip);
 
 	hexlock_free(ctx2);
+	print_summary();
 }
 
 /* =========================================================================

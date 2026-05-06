@@ -84,5 +84,51 @@
 
 #define PATTERN_DRIVERS_LICENSE \
     "(?P<drivers_license>[A-Z]{1,2}[0-9]{6,8})"
+/*
+ * GitHub classic token patterns
+ */
+
+#define PATTERN_GITHUB_GHP \
+    "(?P<github_ghp>ghp_[A-Za-z0-9]{36})"
+
+#define PATTERN_GITHUB_GHO \
+    "(?P<github_gho>gho_[A-Za-z0-9]{36})"
+
+#define PATTERN_GITHUB_GHU \
+    "(?P<github_ghu>ghu_[A-Za-z0-9]{36})"
+
+#define PATTERN_GITHUB_GHS \
+    "(?P<github_ghs>ghs_[A-Za-z0-9]{36})"
+
+#define PATTERN_GITHUB_GHR \
+    "(?P<github_ghr>ghr_[A-Za-z0-9]{36})"
+
+/*
+ * AWS access key kid
+ */
+#define PATTERN_AWS_ACCESS_KEY \
+    "(?P<aws_access_key>AKIA[A-Z2-7]{16})"
+
+/*
+ * AWS secret access key
+ */
+#define PATTERN_AWS_SECRET_KEY \
+    "(?P<aws_secret_key>\\b[A-Za-z0-9/+]{40}\\b)"
+
+/*
+ * Anthropic API key
+ * also OAuth token
+ */
+#define PATTERN_ANTHROPIC_API \
+    "(?P<anthropic_api>sk-ant-api03-[A-Za-z0-9]{48})"
+
+#define PATTERN_ANTHROPIC_OAT \
+    "(?P<anthropic_oat>sk-ant-oat01-[A-Za-z0-9]{48})"
+
+/*
+ * JWT deferred to v0.3.0, see roadmap
+ */
+//#define PATTERN_JWT \
+//    "(?P<jwt>eyJ[A-Za-z0-9_-]+\\.eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+)"
 
 #endif

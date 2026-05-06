@@ -1,6 +1,6 @@
 # hexlock
 
-Protection for PII in LLM pipelines.
+Protection for PII and sensitive data in LLM pipelines.
 
 **[hexlock.xyz](https://hexlock.xyz)**
 
@@ -10,6 +10,10 @@ Hexlock is a tool for preventing sensitive data from being used with LLMs.
 It replaces sensitive data but preserves the format so the LLM understands it still. 
 Then it  rehydrates the response with the original data. The sensitive data never gets
 sent to the LLM.
+
+Data types protected include email, phone, SSNs, driver's license identifiers, 
+passport IDs, credit card, GitHub tokens, Anthropic tokens, AWS keys, and more.
+See [CONFIG](https://github.com/ttarvis/hexlock/blob/master/docs/configuration.md) for more types.
 
 ## Install
 

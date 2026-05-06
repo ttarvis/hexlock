@@ -1,5 +1,9 @@
 # Roadmap for future releases
 
+## v0.3.0 planned features
+
+- JWT: requires variable length records
+
 ## v1 planned featuers
 
 Some things are more urgent and some can wait. Bug fixes should be
@@ -15,6 +19,7 @@ By v1 I would like to have more PII types covered. These can be potential ideas.
 * adding documentation for things
 * dates? date of birth?
 * perhaps adding support for other languages?
+* various token and key types
 
 ### NER
 

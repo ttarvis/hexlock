@@ -108,4 +108,49 @@ hexlock_err_t fpe_encrypt_drivers_license(const uint8_t *key, const char *src,
 hexlock_err_t fpe_decrypt_drivers_license(const uint8_t *key, const char *src,
                                           size_t src_len, char *dst);
 
+/*
+ * GitHub classic tokens — one pair per prefix, all delegate to the same
+ * internal helper in fpe.c with different prefix strings. Body is 36
+ * chars, radix 62 [A-Za-z0-9].
+ */
+hexlock_err_t fpe_encrypt_github_ghp(const uint8_t *key, const char *src, size_t src_len, char *dst);
+hexlock_err_t fpe_decrypt_github_ghp(const uint8_t *key, const char *src, size_t src_len, char *dst);
+
+hexlock_err_t fpe_encrypt_github_gho(const uint8_t *key, const char *src, size_t src_len, char *dst);
+hexlock_err_t fpe_decrypt_github_gho(const uint8_t *key, const char *src, size_t src_len, char *dst);
+
+hexlock_err_t fpe_encrypt_github_ghu(const uint8_t *key, const char *src, size_t src_len, char *dst);
+hexlock_err_t fpe_decrypt_github_ghu(const uint8_t *key, const char *src, size_t src_len, char *dst);
+
+hexlock_err_t fpe_encrypt_github_ghs(const uint8_t *key, const char *src, size_t src_len, char *dst);
+hexlock_err_t fpe_decrypt_github_ghs(const uint8_t *key, const char *src, size_t src_len, char *dst);
+
+hexlock_err_t fpe_encrypt_github_ghr(const uint8_t *key, const char *src, size_t src_len, char *dst);
+hexlock_err_t fpe_decrypt_github_ghr(const uint8_t *key, const char *src, size_t src_len, char *dst);
+
+/*
+ * AWS access key ID — AKIA prefix (4 chars), body 16 chars radix 36 [A-Z0-9]
+ * AWS secret key — no prefix, full 40 chars radix 64 [A-Za-z0-9/+]
+ */
+hexlock_err_t fpe_encrypt_aws_access_key(const uint8_t *key, const char *src, size_t src_len, char *dst);
+hexlock_err_t fpe_decrypt_aws_access_key(const uint8_t *key, const char *src, size_t src_len, char *dst);
+
+hexlock_err_t fpe_encrypt_aws_secret_key(const uint8_t *key, const char *src, size_t src_len, char *dst);
+hexlock_err_t fpe_decrypt_aws_secret_key(const uint8_t *key, const char *src, size_t src_len, char *dst);
+
+/*
+ * Anthropic keys — api03 and oat01 prefixes, both 48-char radix 62 bodies.
+ * Same logic as GitHub wrappers, different prefix string.
+ */
+hexlock_err_t fpe_encrypt_anthropic_api(const uint8_t *key, const char *src, size_t src_len, char *dst);
+hexlock_err_t fpe_decrypt_anthropic_api(const uint8_t *key, const char *src, size_t src_len, char *dst);
+
+hexlock_err_t fpe_encrypt_anthropic_oat(const uint8_t *key, const char *src, size_t src_len, char *dst);
+hexlock_err_t fpe_decrypt_anthropic_oat(const uint8_t *key, const char *src, size_t src_len, char *dst);
+
+/*
+ * JWT — three segment structure handled internally, see fpe.c for detail.
+ */
+//hexlock_err_t fpe_encrypt_jwt(const uint8_t *key, const char *src, size_t src_len, char *dst);
+//hexlock_err_t fpe_decrypt_jwt(const uint8_t *key, const char *src, size_t src_len, char *dst);
 #endif /* HEXLOCK_FPE_H */

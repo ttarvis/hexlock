@@ -34,6 +34,11 @@ static const hexlock_route_t default_routes[HEXLOCK_PII_COUNT] = {
 	[HEXLOCK_PII_ROUTING_NUMBER]  = {HEXLOCK_PII_ROUTING_NUMBER,  HEXLOCK_ALGO_FPE, HEXLOCK_FLAG_NONE, NULL},
 	[HEXLOCK_PII_BANK_ACCOUNT]    = {HEXLOCK_PII_BANK_ACCOUNT,    HEXLOCK_ALGO_FPE, HEXLOCK_FLAG_NONE, NULL},
 	[HEXLOCK_PII_DRIVERS_LICENSE] = {HEXLOCK_PII_DRIVERS_LICENSE, HEXLOCK_ALGO_FPE, HEXLOCK_FLAG_NONE, NULL},
+	[HEXLOCK_PII_GITHUB_TOKEN]   = {HEXLOCK_PII_GITHUB_TOKEN,   HEXLOCK_ALGO_FPE, HEXLOCK_FLAG_NONE, NULL},
+	[HEXLOCK_PII_AWS_ACCESS_KEY] = {HEXLOCK_PII_AWS_ACCESS_KEY, HEXLOCK_ALGO_FPE, HEXLOCK_FLAG_NONE, NULL},
+	[HEXLOCK_PII_AWS_SECRET_KEY] = {HEXLOCK_PII_AWS_SECRET_KEY, HEXLOCK_ALGO_FPE, HEXLOCK_FLAG_NONE, NULL},
+	[HEXLOCK_PII_ANTHROPIC_KEY]  = {HEXLOCK_PII_ANTHROPIC_KEY,  HEXLOCK_ALGO_FPE, HEXLOCK_FLAG_NONE, NULL},
+	//[HEXLOCK_PII_JWT]            = {HEXLOCK_PII_JWT,            HEXLOCK_ALGO_FPE, HEXLOCK_FLAG_NONE, NULL},
 };
 // clang-format on
 
@@ -147,6 +152,25 @@ static const fpe_dispatch_t fpe_dispatch[] = {
          fpe_decrypt_bank_account},
         {HEXLOCK_SUBTYPE_DRIVERS_LICENSE, fpe_encrypt_drivers_license,
          fpe_decrypt_drivers_license},
+        {HEXLOCK_SUBTYPE_GITHUB_GHP, fpe_encrypt_github_ghp,
+         fpe_decrypt_github_ghp},
+        {HEXLOCK_SUBTYPE_GITHUB_GHO, fpe_encrypt_github_gho,
+         fpe_decrypt_github_gho},
+        {HEXLOCK_SUBTYPE_GITHUB_GHU, fpe_encrypt_github_ghu,
+         fpe_decrypt_github_ghu},
+        {HEXLOCK_SUBTYPE_GITHUB_GHS, fpe_encrypt_github_ghs,
+         fpe_decrypt_github_ghs},
+        {HEXLOCK_SUBTYPE_GITHUB_GHR, fpe_encrypt_github_ghr,
+         fpe_decrypt_github_ghr},
+        {HEXLOCK_SUBTYPE_AWS_ACCESS_KEY, fpe_encrypt_aws_access_key,
+         fpe_decrypt_aws_access_key},
+        {HEXLOCK_SUBTYPE_AWS_SECRET_KEY, fpe_encrypt_aws_secret_key,
+         fpe_decrypt_aws_secret_key},
+        {HEXLOCK_SUBTYPE_ANTHROPIC_API, fpe_encrypt_anthropic_api,
+         fpe_decrypt_anthropic_api},
+        {HEXLOCK_SUBTYPE_ANTHROPIC_OAT, fpe_encrypt_anthropic_oat,
+         fpe_decrypt_anthropic_oat},
+        //{HEXLOCK_SUBTYPE_JWT, fpe_encrypt_jwt, fpe_decrypt_jwt},
 };
 
 // TODO: consider moving this to the top
@@ -280,7 +304,8 @@ hexlock_err_t hexlock_process(hexlock_ctx_t *ctx, const char *input,
 			result->records[i].transformed[63] = '\0';
 			result->records[i].token_key = token_key;
 			size_t orig_len = match_len < 255 ? match_len : 255;
-			memcpy(result->records[i].original, input + m->start, orig_len);
+			memcpy(result->records[i].original, input + m->start,
+			       orig_len);
 			result->records[i].original[orig_len] = '\0';
 		}
 

@@ -60,7 +60,6 @@ AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortBlocksOnASingleLine:         Empty
 AllowShortCaseLabelsOnASingleLine:     false
 AllowShortFunctionsOnASingleLine:      Inline
-AllowShortIfStatementsOnASingleLine:   Never
 AllowShortLambdasOnASingleLine:        Inline
 AllowShortLoopsOnASingleLine:          false
 BinPackArguments:                      true

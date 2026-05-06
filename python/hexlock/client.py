@@ -51,6 +51,10 @@ PII_PASSPORT        = _b.PII_PASSPORT
 PII_ROUTING_NUMBER  = _b.PII_ROUTING_NUMBER
 PII_BANK_ACCOUNT    = _b.PII_BANK_ACCOUNT
 PII_DRIVERS_LICENSE = _b.PII_DRIVERS_LICENSE
+PII_GITHUB_TOKEN    = _b.PII_GITHUB_TOKEN
+PII_AWS_ACCESS_KEY  = _b.PII_AWS_ACCESS_KEY
+PII_AWS_SECRET_KEY  = _b.PII_AWS_SECRET_KEY
+PII_ANTHROPIC_KEY   = _b.PII_ANTHROPIC_KEY
 
 # String → PII type constant, used when parsing config dicts
 _PII_NAMES = {
@@ -65,6 +69,10 @@ _PII_NAMES = {
     "routing_number":  _b.PII_ROUTING_NUMBER,
     "bank_account":    _b.PII_BANK_ACCOUNT,
     "drivers_license": _b.PII_DRIVERS_LICENSE,
+    "github_token":    _b.PII_GITHUB_TOKEN,
+    "aws_access_key":  _b.PII_AWS_ACCESS_KEY,
+    "aws_secret_key":  _b.PII_AWS_SECRET_KEY,
+    "anthropic_key":   _b.PII_ANTHROPIC_KEY,
 }
 
 _ALGO_NAMES = {
@@ -86,6 +94,10 @@ _FPE_SUPPORTED = {
     _b.PII_ROUTING_NUMBER,
     _b.PII_BANK_ACCOUNT,
     _b.PII_DRIVERS_LICENSE,
+    _b.PII_GITHUB_TOKEN,
+    _b.PII_AWS_ACCESS_KEY,
+    _b.PII_AWS_SECRET_KEY,
+    _b.PII_ANTHROPIC_KEY,
 }
 
 _TOKENIZE_SUPPORTED = {
@@ -109,6 +121,10 @@ _PII_ALGO_SUPPORT = {
     "routing_number":  "fpe only",
     "bank_account":    "fpe only",
     "drivers_license": "fpe only",
+    "github_token":    "fpe only",
+    "aws_access_key":  "fpe only",
+    "aws_secret_key":  "fpe only",
+    "anthropic_key":   "fpe only",
 }
 
 

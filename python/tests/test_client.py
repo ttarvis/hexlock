@@ -89,6 +89,25 @@ def test_anonymize_ip(client):
     result = client.anonymize("server at 192.168.1.1 is down")
     assert "192.168.1.1" not in result
 
+def test_anonymize_github_token(client):
+    result = client.anonymize("token ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef1234")
+    assert "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef12" not in result
+    assert "ghp_" in result  # prefix preserved
+
+def test_anonymize_aws_access_key(client):
+    result = client.anonymize("key AKIAABCD2345EFGH2367")
+    assert "AKIAIOSFODNN7EXAMPLE" not in result
+    assert "AKIA" in result
+
+def test_anonymize_aws_secret_key(client):
+    result = client.anonymize("secret wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")
+    assert "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY1" not in result
+
+def test_anonymize_anthropic_key(client):
+    result = client.anonymize("key sk-ant-api03-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop123456")
+    assert "sk-ant-api03-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop123456" not in result
+    assert "sk-ant-api03-" in result
+
 def test_anonymize_no_pii(client):
     text = "hello world nothing to see here"
     result = client.anonymize(text)
@@ -133,6 +152,24 @@ def test_deanonymize_email(client):
 
 def test_deanonymize_ssn(client):
     original = "my ssn is 123-45-6789"
+    anonymized = client.anonymize(original)
+    restored = client.deanonymize(anonymized)
+    assert restored == original
+
+def test_deanonymize_github_token(client):
+    original = "my token is ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef12"
+    anonymized = client.anonymize(original)
+    restored = client.deanonymize(anonymized)
+    assert restored == original
+
+def test_deanonymize_aws_access_key(client):
+    original = "access key AKIAIOSFODNN7EXAMPLE123456"
+    anonymized = client.anonymize(original)
+    restored = client.deanonymize(anonymized)
+    assert restored == original
+
+def test_deanonymize_anthropic_key(client):
+    original = "export ANTHROPIC_API_KEY=sk-ant-api03-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop"
     anonymized = client.anonymize(original)
     restored = client.deanonymize(anonymized)
     assert restored == original

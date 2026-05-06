@@ -12,7 +12,21 @@
  * Matches transformed[64] in hexlock_token_record_t.
  */
 #define FPE_MAX_LEN 64
-#define FPE_MAX_MASK 64  // XXX: if any regex matches get close to this we have to make this larger
+#define FPE_MAX_MASK                                                           \
+	64  // XXX: if any regex matches get close to this we have to make this
+	    // larger
+
+/*
+ * alphabets used for things like base64, etc
+ */
+static const char ALPHA_B62[] =
+        "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+static const char ALPHA_B32AWS[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+static const char ALPHA_B64S[] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+// not currently in use
+// static const char ALPHA_B64U[] =
+//        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 /*
  * Records the position and character of a non-digit passthrough character.
@@ -27,24 +41,27 @@ typedef struct {
  * helper function
  * parses ipV4 so we don't have to add in heavy library calls
  */
-static int
-parse_ipv4(const char *src, size_t src_len, uint8_t octets[4])
-{
-    size_t i = 0;
-    for (int octet = 0; octet < 4; octet++) {
-        if (octet > 0) {
-            if (i >= src_len || src[i] != '.') return -1;
-            i++;
-        }
-        if (i >= src_len || src[i] < '0' || src[i] > '9') return -1;
-        int val = 0;
-        while (i < src_len && src[i] >= '0' && src[i] <= '9') {
-            val = val * 10 + (src[i++] - '0');
-            if (val > 255) return -1;
-        }
-        octets[octet] = (uint8_t)val;
-    }
-    return 0;
+static int parse_ipv4(const char *src, size_t src_len, uint8_t octets[4]) {
+	size_t i = 0;
+	for (int octet = 0; octet < 4; octet++) {
+		if (octet > 0) {
+			if (i >= src_len || src[i] != '.')
+				return -1;
+			i++;
+		}
+		if (i >= src_len || src[i] < '0' || src[i] > '9') {
+			return -1;
+		}
+		int val = 0;
+		while (i < src_len && src[i] >= '0' && src[i] <= '9') {
+			val = val * 10 + (src[i++] - '0');
+			if (val > 255) {
+				return -1;
+			}
+		}
+		octets[octet] = (uint8_t)val;
+	}
+	return 0;
 }
 
 /*
@@ -215,6 +232,74 @@ static hexlock_err_t fpe_digits_only(const uint8_t *key,
 	                  mask_count) != 0) {
 		return HEXLOCK_ERR_INTERNAL;
 	}
+
+	return HEXLOCK_OK;
+}
+
+/*
+ * analog to fpe_digits_only
+ * but for arbitrary radix and alphabet
+ */
+static hexlock_err_t fpe_alphanumeric_body(const uint8_t *key,
+                                           hexlock_pii_type_t type,
+                                           const char *src, size_t src_len,
+                                           char *dst, const char *alphabet,
+                                           uint32_t radix, int encrypt) {
+	if (!key || !src || !dst || !alphabet) {
+		return HEXLOCK_ERR_INTERNAL;
+	}
+	if (src_len == 0 || src_len > FPE_MAX_LEN) {
+		return HEXLOCK_ERR_INTERNAL;
+	}
+
+	// map body characters to symbol indices
+	uint8_t symbols[FPE_MAX_LEN];
+	for (size_t i = 0; i < src_len; i++) {
+		const char *p = memchr(alphabet, (unsigned char)src[i], radix);
+		if (!p) {
+			return HEXLOCK_ERR_INTERNAL;
+		}
+		symbols[i] = (uint8_t)(p - alphabet);
+	}
+
+	uint8_t tweak[4];
+	make_type_tweak(type, tweak);
+
+	fast_params_t params = {0};
+	params.security_level = 128;
+	if (calculate_recommended_params(&params, radix, (uint32_t)src_len) !=
+	    0) {
+		return HEXLOCK_ERR_INTERNAL;
+	}
+
+	fast_context_t *fctx = NULL;
+	if (fast_init(&fctx, &params, key) != 0) {
+		return HEXLOCK_ERR_INTERNAL;
+	}
+
+	uint8_t out_symbols[FPE_MAX_LEN];
+	int rc;
+	if (encrypt) {
+		rc = fast_encrypt(fctx, tweak, sizeof(tweak), symbols,
+		                  out_symbols, src_len);
+	} else {
+		rc = fast_decrypt(fctx, tweak, sizeof(tweak), symbols,
+		                  out_symbols, src_len);
+	}
+
+	fast_cleanup(fctx);
+
+	if (rc != 0) {
+		return HEXLOCK_ERR_INTERNAL;
+	}
+
+	for (size_t i = 0; i < src_len; i++) {
+		if (out_symbols[i] >= radix) {
+			return HEXLOCK_ERR_INTERNAL;
+		}
+		dst[i] = alphabet[out_symbols[i]];
+	}
+	dst[src_len] = '\0';
 
 	return HEXLOCK_OK;
 }
@@ -415,8 +500,181 @@ hexlock_err_t fpe_encrypt_drivers_license(const uint8_t *key, const char *src,
 	return fpe_digits_only(key, HEXLOCK_PII_DRIVERS_LICENSE, src, src_len,
 	                       dst, 1);
 }
+
 hexlock_err_t fpe_decrypt_drivers_license(const uint8_t *key, const char *src,
                                           size_t src_len, char *dst) {
 	return fpe_digits_only(key, HEXLOCK_PII_DRIVERS_LICENSE, src, src_len,
 	                       dst, 0);
+}
+
+/*
+ * Github tokens
+ * tweak so that identical tokens under different prefixes encrypt distinctly
+ */
+
+#define GITHUB_BODY_LEN 36
+#define GITHUB_PFX_LEN 4
+
+hexlock_err_t fpe_encrypt_github_ghp(const uint8_t *key, const char *src,
+                                     size_t src_len, char *dst) {
+	memcpy(dst, src, GITHUB_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_GITHUB_GHP,
+	        src + GITHUB_PFX_LEN, src_len - GITHUB_PFX_LEN,
+	        dst + GITHUB_PFX_LEN, ALPHA_B62, 62, 1);
+}
+hexlock_err_t fpe_decrypt_github_ghp(const uint8_t *key, const char *src,
+                                     size_t src_len, char *dst) {
+	memcpy(dst, src, GITHUB_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_GITHUB_GHP,
+	        src + GITHUB_PFX_LEN, src_len - GITHUB_PFX_LEN,
+	        dst + GITHUB_PFX_LEN, ALPHA_B62, 62, 0);
+}
+
+hexlock_err_t fpe_encrypt_github_gho(const uint8_t *key, const char *src,
+                                     size_t src_len, char *dst) {
+	memcpy(dst, src, GITHUB_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_GITHUB_GHO,
+	        src + GITHUB_PFX_LEN, src_len - GITHUB_PFX_LEN,
+	        dst + GITHUB_PFX_LEN, ALPHA_B62, 62, 1);
+}
+hexlock_err_t fpe_decrypt_github_gho(const uint8_t *key, const char *src,
+                                     size_t src_len, char *dst) {
+	memcpy(dst, src, GITHUB_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_GITHUB_GHO,
+	        src + GITHUB_PFX_LEN, src_len - GITHUB_PFX_LEN,
+	        dst + GITHUB_PFX_LEN, ALPHA_B62, 62, 0);
+}
+
+hexlock_err_t fpe_encrypt_github_ghu(const uint8_t *key, const char *src,
+                                     size_t src_len, char *dst) {
+	memcpy(dst, src, GITHUB_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_GITHUB_GHU,
+	        src + GITHUB_PFX_LEN, src_len - GITHUB_PFX_LEN,
+	        dst + GITHUB_PFX_LEN, ALPHA_B62, 62, 1);
+}
+hexlock_err_t fpe_decrypt_github_ghu(const uint8_t *key, const char *src,
+                                     size_t src_len, char *dst) {
+	memcpy(dst, src, GITHUB_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_GITHUB_GHU,
+	        src + GITHUB_PFX_LEN, src_len - GITHUB_PFX_LEN,
+	        dst + GITHUB_PFX_LEN, ALPHA_B62, 62, 0);
+}
+
+hexlock_err_t fpe_encrypt_github_ghs(const uint8_t *key, const char *src,
+                                     size_t src_len, char *dst) {
+	memcpy(dst, src, GITHUB_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_GITHUB_GHS,
+	        src + GITHUB_PFX_LEN, src_len - GITHUB_PFX_LEN,
+	        dst + GITHUB_PFX_LEN, ALPHA_B62, 62, 1);
+}
+hexlock_err_t fpe_decrypt_github_ghs(const uint8_t *key, const char *src,
+                                     size_t src_len, char *dst) {
+	memcpy(dst, src, GITHUB_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_GITHUB_GHS,
+	        src + GITHUB_PFX_LEN, src_len - GITHUB_PFX_LEN,
+	        dst + GITHUB_PFX_LEN, ALPHA_B62, 62, 0);
+}
+
+hexlock_err_t fpe_encrypt_github_ghr(const uint8_t *key, const char *src,
+                                     size_t src_len, char *dst) {
+	memcpy(dst, src, GITHUB_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_GITHUB_GHR,
+	        src + GITHUB_PFX_LEN, src_len - GITHUB_PFX_LEN,
+	        dst + GITHUB_PFX_LEN, ALPHA_B62, 62, 1);
+}
+
+hexlock_err_t fpe_decrypt_github_ghr(const uint8_t *key, const char *src,
+                                     size_t src_len, char *dst) {
+	memcpy(dst, src, GITHUB_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_GITHUB_GHR,
+	        src + GITHUB_PFX_LEN, src_len - GITHUB_PFX_LEN,
+	        dst + GITHUB_PFX_LEN, ALPHA_B62, 62, 0);
+}
+
+/*
+ * AWS access key ID and secret key
+ *
+ */
+
+#define AWS_AKIA_LEN 4
+
+hexlock_err_t fpe_encrypt_aws_access_key(const uint8_t *key, const char *src,
+                                         size_t src_len, char *dst) {
+	memcpy(dst, src, AWS_AKIA_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_PII_AWS_ACCESS_KEY,
+	        src + AWS_AKIA_LEN, src_len - AWS_AKIA_LEN, dst + AWS_AKIA_LEN,
+	        ALPHA_B32AWS, 32, 1);
+}
+
+hexlock_err_t fpe_decrypt_aws_access_key(const uint8_t *key, const char *src,
+                                         size_t src_len, char *dst) {
+	memcpy(dst, src, AWS_AKIA_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_PII_AWS_ACCESS_KEY,
+	        src + AWS_AKIA_LEN, src_len - AWS_AKIA_LEN, dst + AWS_AKIA_LEN,
+	        ALPHA_B32AWS, 32, 0);
+}
+
+hexlock_err_t fpe_encrypt_aws_secret_key(const uint8_t *key, const char *src,
+                                         size_t src_len, char *dst) {
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_PII_AWS_SECRET_KEY, src,
+	        src_len, dst, ALPHA_B64S, 64, 1);
+}
+
+hexlock_err_t fpe_decrypt_aws_secret_key(const uint8_t *key, const char *src,
+                                         size_t src_len, char *dst) {
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_PII_AWS_SECRET_KEY, src,
+	        src_len, dst, ALPHA_B64S, 64, 0);
+}
+
+/*
+ * Anthropic API key and access key
+ */
+
+#define ANTHROPIC_PFX_LEN 13
+hexlock_err_t fpe_encrypt_anthropic_api(const uint8_t *key, const char *src,
+                                        size_t src_len, char *dst) {
+	memcpy(dst, src, ANTHROPIC_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_ANTHROPIC_API,
+	        src + ANTHROPIC_PFX_LEN, src_len - ANTHROPIC_PFX_LEN,
+	        dst + ANTHROPIC_PFX_LEN, ALPHA_B62, 62, 1);
+}
+hexlock_err_t fpe_decrypt_anthropic_api(const uint8_t *key, const char *src,
+                                        size_t src_len, char *dst) {
+	memcpy(dst, src, ANTHROPIC_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_ANTHROPIC_API,
+	        src + ANTHROPIC_PFX_LEN, src_len - ANTHROPIC_PFX_LEN,
+	        dst + ANTHROPIC_PFX_LEN, ALPHA_B62, 62, 0);
+}
+
+hexlock_err_t fpe_encrypt_anthropic_oat(const uint8_t *key, const char *src,
+                                        size_t src_len, char *dst) {
+	memcpy(dst, src, ANTHROPIC_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_ANTHROPIC_OAT,
+	        src + ANTHROPIC_PFX_LEN, src_len - ANTHROPIC_PFX_LEN,
+	        dst + ANTHROPIC_PFX_LEN, ALPHA_B62, 62, 1);
+}
+hexlock_err_t fpe_decrypt_anthropic_oat(const uint8_t *key, const char *src,
+                                        size_t src_len, char *dst) {
+	memcpy(dst, src, ANTHROPIC_PFX_LEN);
+	return fpe_alphanumeric_body(
+	        key, (hexlock_pii_type_t)HEXLOCK_SUBTYPE_ANTHROPIC_OAT,
+	        src + ANTHROPIC_PFX_LEN, src_len - ANTHROPIC_PFX_LEN,
+	        dst + ANTHROPIC_PFX_LEN, ALPHA_B62, 62, 0);
 }

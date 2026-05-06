@@ -30,6 +30,11 @@ typedef enum {
 	HEXLOCK_PII_ROUTING_NUMBER,
 	HEXLOCK_PII_BANK_ACCOUNT,
 	HEXLOCK_PII_DRIVERS_LICENSE,
+	HEXLOCK_PII_GITHUB_TOKEN,
+	HEXLOCK_PII_AWS_ACCESS_KEY,
+	HEXLOCK_PII_AWS_SECRET_KEY,
+	HEXLOCK_PII_ANTHROPIC_KEY,
+	//HEXLOCK_PII_JWT,
 	HEXLOCK_PII_COUNT
 } hexlock_pii_type_t;
 
@@ -57,6 +62,16 @@ typedef enum {
 	HEXLOCK_SUBTYPE_BANK_ACCOUNT,
 	HEXLOCK_SUBTYPE_DRIVERS_LICENSE,
 	HEXLOCK_SUBTYPE_EMAIL,
+	HEXLOCK_SUBTYPE_GITHUB_GHP,      // personal access token     ghp_
+	HEXLOCK_SUBTYPE_GITHUB_GHO,      // oauth access token        gho_
+	HEXLOCK_SUBTYPE_GITHUB_GHU,      // user-to-server token      ghu_
+	HEXLOCK_SUBTYPE_GITHUB_GHS,      // server-to-server token    ghs_
+	HEXLOCK_SUBTYPE_GITHUB_GHR,      // refresh token             ghr_
+	HEXLOCK_SUBTYPE_AWS_ACCESS_KEY,  // AKIA
+	HEXLOCK_SUBTYPE_AWS_SECRET_KEY,
+	HEXLOCK_SUBTYPE_ANTHROPIC_API,   // sk-ant-api03- + 48 chars
+	HEXLOCK_SUBTYPE_ANTHROPIC_OAT,   // sk-ant-oat01- + 48 chars
+	//HEXLOCK_SUBTYPE_JWT,
 } hexlock_subtype_t;
 
 /*
@@ -93,7 +108,7 @@ typedef struct {
 	hexlock_algorithm_t algo;
 	hexlock_subtype_t subtype;
 	uint32_t token_key;
-	char transformed[64];
+	char transformed[256];
 	char original[256];
 } hexlock_token_record_t;
 

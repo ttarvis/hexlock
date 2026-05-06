@@ -58,6 +58,19 @@ static const hexlock_pattern_entry_t pattern_table[] = {
         {"phone_dot", HEXLOCK_PII_PHONE, HEXLOCK_SUBTYPE_PHONE_DOT},
         {"phone_space", HEXLOCK_PII_PHONE, HEXLOCK_SUBTYPE_PHONE_SPACE},
         {"phone_bare", HEXLOCK_PII_PHONE, HEXLOCK_SUBTYPE_PHONE_BARE},
+        {"github_ghp", HEXLOCK_PII_GITHUB_TOKEN, HEXLOCK_SUBTYPE_GITHUB_GHP},
+        {"github_gho", HEXLOCK_PII_GITHUB_TOKEN, HEXLOCK_SUBTYPE_GITHUB_GHO},
+        {"github_ghu", HEXLOCK_PII_GITHUB_TOKEN, HEXLOCK_SUBTYPE_GITHUB_GHU},
+        {"github_ghs", HEXLOCK_PII_GITHUB_TOKEN, HEXLOCK_SUBTYPE_GITHUB_GHS},
+        {"github_ghr", HEXLOCK_PII_GITHUB_TOKEN, HEXLOCK_SUBTYPE_GITHUB_GHR},
+        {"aws_access_key", HEXLOCK_PII_AWS_ACCESS_KEY,
+         HEXLOCK_SUBTYPE_AWS_ACCESS_KEY},
+        {"anthropic_api", HEXLOCK_PII_ANTHROPIC_KEY,
+         HEXLOCK_SUBTYPE_ANTHROPIC_API},
+        {"anthropic_oat", HEXLOCK_PII_ANTHROPIC_KEY,
+         HEXLOCK_SUBTYPE_ANTHROPIC_OAT},
+        {"aws_secret_key", HEXLOCK_PII_AWS_SECRET_KEY,  // keep this at the end so it doesn't match other patterns
+         HEXLOCK_SUBTYPE_AWS_SECRET_KEY},
 };
 
 /*
@@ -84,6 +97,15 @@ static char *build_pattern(const hexlock_route_t *routes) {
 	        {PATTERN_PHONE_DOT, HEXLOCK_PII_PHONE},
 	        {PATTERN_PHONE_SPACE, HEXLOCK_PII_PHONE},
 	        {PATTERN_PHONE_BARE, HEXLOCK_PII_PHONE},
+	        {PATTERN_GITHUB_GHP, HEXLOCK_PII_GITHUB_TOKEN},
+	        {PATTERN_GITHUB_GHO, HEXLOCK_PII_GITHUB_TOKEN},
+	        {PATTERN_GITHUB_GHU, HEXLOCK_PII_GITHUB_TOKEN},
+	        {PATTERN_GITHUB_GHS, HEXLOCK_PII_GITHUB_TOKEN},
+	        {PATTERN_GITHUB_GHR, HEXLOCK_PII_GITHUB_TOKEN},
+	        {PATTERN_AWS_ACCESS_KEY, HEXLOCK_PII_AWS_ACCESS_KEY},
+	        {PATTERN_ANTHROPIC_API, HEXLOCK_PII_ANTHROPIC_KEY},
+	        {PATTERN_ANTHROPIC_OAT, HEXLOCK_PII_ANTHROPIC_KEY},
+	        {PATTERN_AWS_SECRET_KEY, HEXLOCK_PII_AWS_SECRET_KEY},  // keep this at the end so it doesn't match other patterns
 	};
 	size_t count = sizeof(all_patterns) / sizeof(all_patterns[0]);
 

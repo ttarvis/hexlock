@@ -19,6 +19,10 @@ The default behavior for each PII type is:
 | routing_number   | fpe        |
 | bank_account     | fpe        |
 | drivers_license  | fpe        |
+| github tokens    | fpe        |
+| AWS access id    | fpe        |
+| AWS secret key   | fpe        |
+| Anthropic keys   | fpe        |
 
 **FPE** (format-preserving encryption) transforms the value in place while keeping
 its format intact. A phone number stays a phone number, an SSN stays an SSN.
