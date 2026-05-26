@@ -1,12 +1,10 @@
 # hexlock
 
-Protection for PII and sensitive data in LLM pipelines.
-
-**[hexlock.xyz](https://hexlock.xyz)**
+`hexlock` transforms sensitive data before it reaches your LLM. Phone numbers, emails, and card numbers become realistic tokens that your prompt still understands, and can be restored after.
 
 ## What is it?
 
-Hexlock is a tool for preventing sensitive data from being used with LLMs.
+`hexlock` is a tool for preventing sensitive data from being used with LLMs.
 It replaces sensitive data but preserves the format so the LLM understands it still. 
 Then it  rehydrates the response with the original data. The sensitive data never gets
 sent to the LLM.
